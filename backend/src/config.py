@@ -1,41 +1,44 @@
 """
 Environment configuration for the Todo application.
-Loads configuration from environment variables.
+Re-exports settings from the root config module.
 """
-from pydantic_settings import BaseSettings
-from typing import Optional
 import logging
 import sys
+import os
+
+# Load .env file
+from dotenv import load_dotenv
+load_dotenv()
 
 
-class Settings(BaseSettings):
+class Settings:
     """Application settings loaded from environment variables."""
 
-    # Database
-    DATABASE_URL: str
+    def __init__(self):
+        # Database
+        self.DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./todo_app.db")
 
-    # Authentication
-    BETTER_AUTH_SECRET: str
-    JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRY_DAYS: int = 7
+        # Authentication
+        self.BETTER_AUTH_SECRET: str = os.getenv("BETTER_AUTH_SECRET", "")
+        self.JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+        self.JWT_EXPIRY_DAYS: int = int(os.getenv("JWT_EXPIRY_DAYS", "7"))
 
-    # Application
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = False
+        # Application
+        self.ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+        self.DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+        # CORS - parsed from comma-separated string
+        cors_env = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+        self.CORS_ORIGINS: list[str] = [
+            origin.strip() for origin in cors_env.split(",") if origin.strip()
+        ]
 
-    # Logging
-    LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "json"  # json or text
+        # Logging
+        self.LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+        self.LOG_FORMAT: str = os.getenv("LOG_FORMAT", "text")
 
-    # Rate Limiting
-    AUTH_RATE_LIMIT: str = "5/minute"  # Rate limit for auth endpoints
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+        # Rate Limiting
+        self.AUTH_RATE_LIMIT: str = os.getenv("AUTH_RATE_LIMIT", "5/minute")
 
 
 # Global settings instance

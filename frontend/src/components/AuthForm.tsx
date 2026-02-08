@@ -6,9 +6,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '../services/auth';
+import { signIn, signUp } from '../lib/auth-client';
 import { isValidEmail, isValidPassword, sanitizeInput } from '../lib/utils';
-import type { ApiError } from '../lib/types';
 import { useToast } from './ToastProvider';
 
 interface AuthFormProps {
@@ -60,27 +59,22 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setLoading(true);
 
     try {
+      const cleanEmail = sanitizeInput(email);
+
       if (isLogin) {
-        await auth.signin({
-          email: sanitizeInput(email),
-          password
-        });
+        await signIn(cleanEmail, password);
       } else {
-        await auth.signup({
-          email: sanitizeInput(email),
-          password: sanitizeInput(password)
-        });
+        await signUp(cleanEmail, password);
       }
 
       // Show success notification
       const action = isLogin ? 'signed in' : 'signed up';
       showToast(`Successfully ${action}`, 'success');
 
-      // Redirect to dashboard on success
-      router.push('/dashboard');
+      // Redirect to chat on success
+      router.push('/chat');
     } catch (err) {
-      const apiError = err as ApiError;
-      const errorMessage = apiError.detail || apiError.error || 'An error occurred';
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
 
       // Show error notification

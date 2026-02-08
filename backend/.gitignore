@@ -64,3 +64,20 @@ Thumbs.db
 
 # Neon PostgreSQL connection strings (if accidentally saved)
 neon-connection.txt
+
+# Windows reserved / Next.js catch-all routes
+nul
+frontend/src/app/api/auth/[...*]/
+
+# Python / FastAPI
+__pycache__/
+*.pyc
+.env
+.env.*
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
+frontend.log

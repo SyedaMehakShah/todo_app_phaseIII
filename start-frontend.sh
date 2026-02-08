@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "C:\Users\Admin\hackathon-2\frontend"
+cd "C:\Users\Admin\phase-III\frontend"
 
 echo "📦 Installing Node.js dependencies..."
 npm install

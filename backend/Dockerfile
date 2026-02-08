@@ -27,4 +27,5 @@ COPY . .
 EXPOSE 8000
 
 # Start the application
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+# Hugging Face uses PORT environment variable
+CMD uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-7860}

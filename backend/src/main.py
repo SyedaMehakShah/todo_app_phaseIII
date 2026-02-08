@@ -102,6 +102,8 @@ async def root():
 
 # Router registration
 from .api.v1 import auth, tasks
+from .api import chat
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(tasks.router, prefix="/api/v1", tags=["Tasks"])
+app.include_router(chat.router)

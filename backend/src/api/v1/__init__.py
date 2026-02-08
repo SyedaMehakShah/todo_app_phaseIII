@@ -1,3 +1,5 @@
 """API v1 package initialization."""
 
-__all__ = []
+from . import auth, tasks
+
+__all__ = ["auth", "tasks"]

@@ -1,6 +1,6 @@
 @echo off
 echo Installing Node.js dependencies...
-cd /d "C:\Users\Admin\hackathon-2\frontend"
+cd /d "C:\Users\Admin\phase-III\frontend"
 
 npm install
 
