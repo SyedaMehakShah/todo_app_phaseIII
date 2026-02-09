@@ -1,13 +1,37 @@
-"""
-Entry point for the FastAPI application.
-This file helps Railway detect the project as a Python/FastAPI application.
-"""
-from src.main import app
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+import logging
 
-# This creates an alias for the main FastAPI app instance
-# Railway can detect this as a Python web application
-application = app
+# Import the lifespan from main to handle startup/shutdown
+from src.database import init_db, close_db
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager."""
+    # Startup: Initialize database
+    await init_db()
+    yield
+    # Shutdown: Close database connections
+    await close_db()
+
+# Initialize FastAPI application
+app = FastAPI(
+    title="Todo App API",
+    description="Phase II Todo Full-Stack Web Application API",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+# Import and include routers
+from src.api.v1 import auth, tasks
+from src.api import chat
+
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(tasks.router, prefix="/api/v1", tags=["Tasks"])
+app.include_router(chat.router)

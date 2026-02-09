@@ -5,10 +5,9 @@ Constitution Principle VI: Single chat endpoint for all interactions.
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from openai import RateLimitError, APIError, AuthenticationError
 
 from .middleware.jwt_auth import get_current_user_id
-# Switch to Gemini-based agent
+# Using Gemini-based agent
 from src.services.agent_gemini import process_message
 from src.services.conversation import (
     get_conversation_history,
@@ -83,30 +82,27 @@ async def send_chat_message(
             conversation_id=conversation_id,
         )
 
-    except RateLimitError as e:
-        logger.warning(f"OpenAI rate limit hit for user {user_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="The AI service is busy. Please try again in a moment.",
-        )
-    except AuthenticationError as e:
-        logger.error(f"OpenAI authentication error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service configuration error. Please contact support.",
-        )
-    except APIError as e:
-        logger.error(f"OpenAI API error for user {user_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="The AI service is temporarily unavailable. Please try again later.",
-        )
     except Exception as e:
-        logger.exception(f"Unexpected error in chat for user {user_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Something went wrong. Please try again later.",
-        )
+        # Handle specific errors from the AI agent
+        error_msg = str(e).lower()
+        if "quota" in error_msg or "rate" in error_msg:
+            logger.warning(f"Gemini rate limit or quota exceeded for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="The AI service is busy. Please try again in a moment.",
+            )
+        elif "auth" in error_msg or "api" in error_msg:
+            logger.error(f"Gemini authentication or API error for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI service configuration error. Please contact support.",
+            )
+        else:
+            logger.exception(f"Unexpected error in chat for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Something went wrong. Please try again later.",
+            )
 
 
 @router.get("/api/{user_id}/conversations")

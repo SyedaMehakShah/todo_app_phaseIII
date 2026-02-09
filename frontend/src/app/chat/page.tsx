@@ -60,7 +60,15 @@ export default function ChatPage() {
       }
 
       try {
-        const history = await getConversationHistory(user.id, token);
+        const history = await getConversationHistory(user.id, token, undefined, undefined, () => {
+          // Callback for unauthorized access - clear auth state
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_id');
+          localStorage.removeItem('user_email');
+          router.push('/'); // Redirect to home
+        });
         if (history.messages && history.messages.length > 0) {
           setMessages(
             history.messages.map((msg) => ({
@@ -73,6 +81,16 @@ export default function ChatPage() {
       } catch (err) {
         console.error("Failed to load history:", err);
         // Don't show error for empty history
+        // The unauthorized callback will handle 401 errors
+        if (err instanceof Error && (err as any).status === 401) {
+          // Ensure auth state is cleared if not handled by callback
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_id');
+          localStorage.removeItem('user_email');
+          router.push('/'); // Redirect to home
+        }
       } finally {
         setIsLoadingHistory(false);
       }

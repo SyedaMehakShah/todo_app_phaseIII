@@ -37,7 +37,7 @@ export class ApiError extends Error {
 /**
  * Handle API response errors with user-friendly messages.
  */
-async function handleResponseError(response: Response): Promise<never> {
+async function handleResponseError(response: Response, onUnauthorized?: () => void): Promise<never> {
   const status = response.status;
   let errorData: { detail?: string; error?: string; message?: string } = {};
 
@@ -51,6 +51,10 @@ async function handleResponseError(response: Response): Promise<never> {
 
   switch (status) {
     case 401:
+      // Call the unauthorized callback if provided
+      if (onUnauthorized) {
+        onUnauthorized();
+      }
       throw new ApiError(
         serverMessage || "Session expired. Please sign in again.",
         status,
@@ -98,7 +102,8 @@ export async function sendChatMessage(
   userId: string,
   message: string,
   token: string,
-  timeout: number = 30000
+  timeout: number = 30000,
+  onUnauthorized?: () => void
 ): Promise<ChatResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -115,7 +120,7 @@ export async function sendChatMessage(
     });
 
     if (!response.ok) {
-      await handleResponseError(response);
+      await handleResponseError(response, onUnauthorized);
     }
 
     return response.json();
@@ -147,7 +152,8 @@ export async function getConversationHistory(
   userId: string,
   token: string,
   limit: number = 50,
-  timeout: number = 10000
+  timeout: number = 10000,
+  onUnauthorized?: () => void
 ): Promise<ConversationHistory> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -164,7 +170,7 @@ export async function getConversationHistory(
     );
 
     if (!response.ok) {
-      await handleResponseError(response);
+      await handleResponseError(response, onUnauthorized);
     }
 
     return response.json();
