@@ -101,8 +101,9 @@ export default function ChatPage() {
 
   const handleSignOut = async () => {
     try {
-      await fetch("/api/auth/sign-out", { method: "POST" });
-      router.push("/login");
+      // Use the auth client to sign out
+      const { signOut } = await import('../../lib/auth-client');
+      await signOut();
     } catch (err) {
       console.error("Sign out failed:", err);
     }
